@@ -1,0 +1,44 @@
+version: '2'
+
+services:
+  app_db:
+    image: mysql:5.7
+    container_name: app_db
+    ports:
+      - "8040:3306"
+    volumes:
+      - ./database/data:/var/lib/mysql
+      - ./database/initdb.d:/docker-entrypoint-initdb.d
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mypasswordhere # any random string will do
+      MYSQL_DATABASE: jaccon # the name of your mysql database
+      MYSQL_USER: jaccon # the name of the database user
+      MYSQL_PASSWORD: mypasswordhere # the password of the mysql user
+
+  app_wp:
+    depends_on:
+      - app_db
+    image: wordpress:php7.1 # we're using the image with php7.1 
+    container_name: app_wp
+    ports:
+      - "8041:80"
+    restart: always
+    links:
+      - app_db:mysql
+    volumes:
+      - ./src:/var/www/html
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: app_phpmyadmin
+    volumes:
+      - ./phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php
+    links:
+      - app_db
+    ports:
+      - "8042:80"
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=app_db
+
